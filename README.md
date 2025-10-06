@@ -17,12 +17,10 @@ Fix Cli And Job if function proc_* and exec don`t allowed
 
 config/module.config.php` of the module into your `config/local.config.php`:
 ...
-    'FixCliAndJob' => [
-        'config' => [
-            'executeJob' => 'execute',  \\ method of performing the job, execute/CRON/CURL
-            'time_limit' => 600,
-            'CRON_Jobs_limit' => 3 \\ number of jobs to be completed in one event
-        ]
+    'fixcliandjob' => [
+        'executeJob' => 'execute',  \\ method of performing the job, execute/CRON/CURL
+        'time_limit' => 600,
+        'CRON_Jobs_limit' => 3 \\ number of jobs to be completed in one event
     ]
 ...
 

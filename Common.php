@@ -8,6 +8,8 @@ use Omeka\Entity\Job;
 trait Common
 {
 
+    protected $configName = 'fixcliandjob';
+
     protected $serviceLocator;
 
     protected $acl;
@@ -18,7 +20,7 @@ trait Common
 
     protected $userSettings;
 
-    protected $configs;
+    protected $config;
 
     protected $apiManager;
 
@@ -45,10 +47,11 @@ trait Common
         return $this->serviceLocator;
     }
 
+
     public function getConnection()
     {
 
-        if($this->serviceLocator){
+        if($this->getServiceLocator()){
             if(!$this->connection){
                 $this->connection = $this->getServiceLocator()->get('Omeka\Connection');
             }
@@ -61,7 +64,7 @@ trait Common
     public function getLogger()
     {
 
-        if($this->serviceLocator){
+        if($this->getServiceLocator()){
             if(!$this->logger){
                 $this->logger = $this->getServiceLocator()->get('Omeka\Logger');
             }
@@ -74,7 +77,7 @@ trait Common
     public function getApiManager()
     {
 
-        if($this->serviceLocator){
+        if($this->getServiceLocator()){
             if(!$this->apiManager){
                 $this->apiManager = $this->getServiceLocator()->get('Omeka\ApiManager');
             }
@@ -87,7 +90,7 @@ trait Common
     public function getEntityManager()
     {
 
-        if($this->serviceLocator){
+        if($this->getServiceLocator()){
             if(!$this->entityManager){
                 $this->entityManager = $this->getServiceLocator()->get('Omeka\EntityManager');
             }
@@ -100,7 +103,7 @@ trait Common
     public function getAcl()
     {
 
-        if($this->serviceLocator){
+        if($this->getServiceLocator()){
             if(!$this->acl){
                 $this->acl = $this->getServiceLocator()->get('Omeka\Acl');
             }
@@ -113,7 +116,7 @@ trait Common
     public function getSettings()
     {
 
-        if($this->serviceLocator){
+        if($this->getServiceLocator()){
             if(!$this->settings){
                 $this->settings = $this->getServiceLocator()->get('Omeka\Settings');
             }
@@ -126,7 +129,7 @@ trait Common
     public function getUserSettings()
     {
 
-        if($this->serviceLocator){
+        if($this->getServiceLocator()){
             if(!$this->userSettings){
                 $this->userSettings = $this->getServiceLocator()->get('Omeka\Settings\User');
             }
@@ -139,48 +142,76 @@ trait Common
     public function getConfigs()
     {
 
-        if($this->serviceLocator){
-            if(!$this->configs){
-                $this->configs = $this->getServiceLocator()->get('Config');
+        if($this->getServiceLocator()){
+            if(!$this->config){
+                $this->config = $this->getServiceLocator()->get('Config');
             }
-            return $this->configs;
+            return $this->config;
         }
         return;
         
     }
 
-    private function getConf($name = Null, $param = Null, $all = False)
+    public function getTranslator()
     {
 
-        $config = $this->getConfigs()['FixCliAndJob']['config'];
-        if(!empty($config)){
-            if(!empty($name) && !empty($config[$name])){
-                if(!empty($param) && !empty($config[$name][$param])){
-                    return $config[$name][$param];
+        if($this->getServiceLocator()){
+            if(!$this->translator){
+                $this->translator = $this->getServiceLocator()->get('MvcTranslator');
+            }
+            return $this->translator;
+        }
+        return;
+        
+    }
+
+    public function getConf($name = Null, $param = Null, $all = False)
+    {
+
+        $config = $this->getConfigs()[$this->configName];
+        if(!empty($name)){
+            // if(!empty($config['options']) && !empty($config['options'][$name])){
+            //     $name = $config['options'][$name];
+            // }
+            if(!empty($config[$name])){
+                if(!empty($param)){
+                    if(!empty($config[$name][$param])){
+                        return $config[$name][$param];
+                    }else{
+                        return False;
+                    }
                 }else{
                     return $config[$name];
                 }
-            }elseif($all){
+            }
+        }else{
+            if($all){
                 return $config;
+            }else{
+                return False;
+            }
+        }
+
+    }
+
+    public function getOps($name)
+    {
+
+        $config = $this->getConfigs()[$this->configName];
+        if(!empty($name)){
+            if(!empty($config['options']) && !empty($config['options'][$name])){
+                return $config['options'][$name];
             }
         }
         return False;
 
     }
 
-    private function getOps($name)
-    {
-        return $this->getConf('options', $name);
-    }
-
-    private function getSets($name, $callback = [])
+    public function getSets($name, $callback = [])
     {
         
-        if(!empty($opt = $this->getOps($name))){
-            $r = $this->getSettings()->get($opt);
-        }else{
-            $r = $this->getSettings()->get($name);
-        }
+        $name = (($opt = $this->getOps($name)) ? $opt : $name);
+        $r = ($rc = $this->getSettings()->get($name)) ? $rc : ($rc = $this->getConf('settings', $name) ? $rc : Null);
         if(!empty($callback)){
             $r = call_user_func_array($callback, [$r]);
         }
@@ -188,15 +219,11 @@ trait Common
         
     }
 
-    private function setSets($name, $value)
+    public function setSets($name, $value)
     {
         
-        $opt = $this->getOps($name);
-        if(!empty($opt)){
-            $this->getSettings()->set($opt, $value);
-        }else{
-            $this->getSettings()->set($name, $value);
-        }
+        $name = (($opt = $this->getOps($name)) ? $opt : $name);
+        $this->getSettings()->set($name, $value);
         
     }
 

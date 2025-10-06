@@ -61,12 +61,9 @@ return [
             ],
         ],
     ],
-    'FixCliAndJob' => [
-        'config' => [
-            'executeJob' => 'execute',
-            'time_limit' => 600,
-            'CRON_Jobs_limit' => 3,
-            'path_permissions' => dirname(__DIR__).'/data/permissions',
-        ]
+    'fixcliandjob' => [
+        'executeJob' => 'execute',
+        'time_limit' => 600,
+        'CRON_Jobs_limit' => 3
     ]
 ];
